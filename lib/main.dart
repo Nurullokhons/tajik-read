@@ -93,11 +93,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   String _tidyOcrText(String input) {
-    return input
-        .replaceAll('\r', '\n')
-        .replaceAll(RegExp(r'[ \t]+'), ' ')
-        .replaceAll(RegExp(r'\n{3,}'), '\n\n')
-        .trim();
+    // Tesseract usually emits blank lines between layout paragraphs
+    // and single newlines for line wraps.
+    return normalizeOcrParagraphs(input);
   }
 
   void _startReading() {
@@ -175,8 +173,17 @@ class _HomeScreenState extends State<HomeScreen> {
               Text(_error!, style: const TextStyle(color: Colors.red)),
             ],
             const SizedBox(height: 20),
-            const Text('Матни шинохташуда',
-                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Матни шинохташуда',
+                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+                Text(
+                  'Абзацҳо: ${parseParagraphs(_textController.text).length}',
+                  style: const TextStyle(color: Colors.black54, fontSize: 12),
+                ),
+              ],
+            ),
             const SizedBox(height: 8),
             TextField(
               controller: _textController,
@@ -208,6 +215,33 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
+
+/// Joins OCR line wraps but preserves blank lines as paragraph boundaries.
+String normalizeOcrParagraphs(String input) {
+  final normalized = input
+      .replaceAll('\r\n', '\n')
+      .replaceAll('\r', '\n')
+      .replaceAll(RegExp(r'[ \t]+'), ' ')
+      .trim();
+  if (normalized.isEmpty) return '';
+
+  final blocks = normalized
+      .split(RegExp(r'\n[ \t]*\n+'))
+      .map((block) => block
+          .split('\n')
+          .map((line) => line.trim())
+          .where((line) => line.isNotEmpty)
+          .join(' '))
+      .where((block) => block.isNotEmpty);
+
+  return blocks.join('\n\n');
+}
+
+List<String> parseParagraphs(String text) => text
+    .split(RegExp(r'\n[ \t]*\n+'))
+    .map((paragraph) => paragraph.trim())
+    .where((paragraph) => paragraph.isNotEmpty)
+    .toList();
 
 List<String> splitWords(String text) => text
     .trim()
