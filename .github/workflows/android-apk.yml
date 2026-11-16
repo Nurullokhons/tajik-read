@@ -49,6 +49,24 @@ jobs:
       - name: Run tests
         run: flutter test
 
+      - name: Work around image_picker Android Lint crash
+        run: |
+          mkdir -p ~/.gradle/init.d
+          cat > ~/.gradle/init.d/disable-release-lint.gradle <<'EOF'
+          gradle.projectsEvaluated {
+            allprojects {
+              if (project.name == 'image_picker_android') {
+                tasks.matching {
+                  it.name == 'lintVitalAnalyzeRelease' ||
+                  it.name == 'lintAnalyzeRelease'
+                }.configureEach {
+                  enabled = false
+                }
+              }
+            }
+          }
+          EOF
+
       - name: Build APK
         run: flutter build apk --release
 
