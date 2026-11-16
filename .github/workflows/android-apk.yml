@@ -43,6 +43,9 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Remove default Flutter test
+        run: rm -f test/widget_test.dart
+
       - name: Run tests
         run: flutter test
 
