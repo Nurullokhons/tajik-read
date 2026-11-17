@@ -18,12 +18,12 @@ class TajikReadApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Tajik Read',
+      title: 'Тезхон',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF16845B)),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF176B4B)),
         useMaterial3: true,
-        scaffoldBackgroundColor: const Color(0xFFF7F8F7),
+        scaffoldBackgroundColor: const Color(0xFFF7F9F7),
       ),
       home: const ProfileSelectionScreen(),
     );
@@ -116,7 +116,7 @@ class _ProfileSelectionScreenState extends State<ProfileSelectionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tajik Read'),
+        title: const Text('Тезхон'),
         centerTitle: true,
       ),
       body: SafeArea(
@@ -127,7 +127,7 @@ class _ProfileSelectionScreenState extends State<ProfileSelectionScreen> {
                 children: [
                   const SizedBox(height: 18),
                   const Icon(Icons.menu_book_rounded,
-                      size: 54, color: Color(0xFF16845B)),
+                      size: 54, color: Color(0xFF176B4B)),
                   const SizedBox(height: 12),
                   const Text(
                     'Кӣ имрӯз мехонад?',
@@ -146,13 +146,13 @@ class _ProfileSelectionScreenState extends State<ProfileSelectionScreen> {
                           contentPadding: const EdgeInsets.symmetric(
                               horizontal: 18, vertical: 8),
                           leading: CircleAvatar(
-                            backgroundColor: const Color(0xFFE7F4ED),
+                            backgroundColor: const Color(0xFFE5F3EA),
                             child: Text(
                               profile.name.isEmpty
                                   ? '?'
                                   : profile.name.characters.first.toUpperCase(),
                               style: const TextStyle(
-                                  color: Color(0xFF16845B),
+                                  color: Color(0xFF176B4B),
                                   fontWeight: FontWeight.w800),
                             ),
                           ),
@@ -282,7 +282,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tajik Read', style: TextStyle(fontWeight: FontWeight.w800)),
+        title: const Text('Тезхон', style: TextStyle(fontWeight: FontWeight.w800)),
         centerTitle: true,
         actions: [
           IconButton(
@@ -309,13 +309,13 @@ class _HomeScreenState extends State<HomeScreen> {
             ListTile(
               contentPadding: EdgeInsets.zero,
               leading: CircleAvatar(
-                backgroundColor: const Color(0xFFE7F4ED),
+                backgroundColor: const Color(0xFFE5F3EA),
                 child: Text(
                   widget.profile.name.isEmpty
                       ? '?'
                       : widget.profile.name.characters.first.toUpperCase(),
                   style: const TextStyle(
-                    color: Color(0xFF16845B),
+                    color: Color(0xFF176B4B),
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -337,7 +337,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Container(
               padding: const EdgeInsets.all(22),
               decoration: BoxDecoration(
-                color: const Color(0xFFE7F4ED),
+                color: const Color(0xFFE5F3EA),
                 borderRadius: BorderRadius.circular(24),
               ),
               child: const Column(
@@ -346,7 +346,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Text('Суръати хониши худро санҷед',
                       style: TextStyle(fontSize: 23, fontWeight: FontWeight.w800)),
                   SizedBox(height: 8),
-                  Text('Саҳифаро акс гиред, матнро санҷед ва дар 60 сония чанд калима хонданатонро муайян кунед.'),
+                  Text('Китобро кушо, тезтар бихон ва суръати хониши худро дар 60 сония бисанҷ!'),
                 ],
               ),
             ),
@@ -413,11 +413,6 @@ class _HomeScreenState extends State<HomeScreen> {
               child: const Text('Оғози хониш · 60 сония',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
             ),
-            const SizedBox(height: 12),
-            const Text(
-              'Эзоҳ: ҳоло OCR танҳо бо модели тоҷикӣ кор мекунад. Барои сохтани APK модели tgk.traineddata бояд ба assets/tessdata гузошта шавад.',
-              style: TextStyle(color: Colors.black54, fontSize: 12),
-            ),
           ],
         ),
       ),
@@ -434,7 +429,8 @@ String normalizeOcrParagraphs(String input) {
       .trim();
   if (normalized.isEmpty) return '';
 
-  final blocks = normalized
+  final dehyphenated = normalized.replaceAll(RegExp(r'-\\n[ \\t]*'), '');
+  final blocks = dehyphenated
       .split(RegExp(r'\n[ \t]*\n+'))
       .map((block) => block
           .split('\n')
@@ -505,7 +501,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.auto_graph, size: 64, color: Color(0xFF16845B)),
+                    Icon(Icons.auto_graph, size: 64, color: Color(0xFF176B4B)),
                     SizedBox(height: 16),
                     Text(
                       'Ҳоло натиҷа нест',
@@ -621,7 +617,7 @@ class _StatCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFE7F4ED),
+        color: const Color(0xFFE5F3EA),
         borderRadius: BorderRadius.circular(18),
       ),
       child: Column(
@@ -731,7 +727,7 @@ class _ReadingScreenState extends State<ReadingScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.emoji_events_outlined, size: 64, color: Color(0xFF16845B)),
+                const Icon(Icons.emoji_events_outlined, size: 64, color: Color(0xFF176B4B)),
                 const SizedBox(height: 16),
                 const Text('Шумо хондед', style: TextStyle(fontSize: 20)),
                 Text('$_readCount',
