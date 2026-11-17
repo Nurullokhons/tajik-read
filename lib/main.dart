@@ -56,11 +56,6 @@ class _ProfileSelectionScreenState extends State<ProfileSelectionScreen> {
       _loading = false;
     });
 
-    final activeId = await ProfileStore.loadActiveId();
-    final active = profiles.where((profile) => profile.id == activeId);
-    if (active.isNotEmpty && mounted) {
-      _openProfile(active.first, replace: true);
-    }
   }
 
   Future<void> _openProfile(ReaderProfile profile, {bool replace = false}) async {
