@@ -429,7 +429,7 @@ String normalizeOcrParagraphs(String input) {
       .trim();
   if (normalized.isEmpty) return '';
 
-  final dehyphenated = normalized.replaceAll(RegExp(r'-\\n[ \\t]*'), '');
+  final dehyphenated = normalized.replaceAll(RegExp(r'-\n[ \t]*'), '');
   final blocks = dehyphenated
       .split(RegExp(r'\n[ \t]*\n+'))
       .map((block) => block
