@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:tesseract_ocr/ocr_engine_config.dart';
 import 'package:tesseract_ocr/tesseract_ocr.dart';
 import 'paragraph_detector.dart';
+import 'statistics.dart';
 
 void main() => runApp(const TajikReadApp());
 
@@ -135,6 +136,15 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: const Text('Tajik Read', style: TextStyle(fontWeight: FontWeight.w800)),
         centerTitle: true,
+        actions: [
+          IconButton(
+            tooltip: 'Омори натиҷаҳо',
+            icon: const Icon(Icons.insights_outlined),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const StatisticsScreen()),
+            ),
+          ),
+        ],
       ),
       body: SafeArea(
         child: ListView(
@@ -263,6 +273,186 @@ List<String> splitWords(String text) => text
     .where((word) => word.isNotEmpty)
     .toList();
 
+class StatisticsScreen extends StatefulWidget {
+  const StatisticsScreen({super.key});
+
+  @override
+  State<StatisticsScreen> createState() => _StatisticsScreenState();
+}
+
+class _StatisticsScreenState extends State<StatisticsScreen> {
+  late Future<List<ReadingResult>> _resultsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _resultsFuture = StatisticsStore.load();
+  }
+
+  String _dateLabel(DateTime date) {
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    final hour = date.hour.toString().padLeft(2, '0');
+    final minute = date.minute.toString().padLeft(2, '0');
+    return '$day.$month.${date.year} · $hour:$minute';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Омори хониш')),
+      body: FutureBuilder<List<ReadingResult>>(
+        future: _resultsFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState != ConnectionState.done) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return const Center(child: Text('Омори натиҷаҳоро кушодан муяссар нашуд.'));
+          }
+
+          final results = snapshot.data ?? [];
+          if (results.isEmpty) {
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(28),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.auto_graph, size: 64, color: Color(0xFF16845B)),
+                    SizedBox(height: 16),
+                    Text(
+                      'Ҳоло натиҷа нест',
+                      style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'Пас аз анҷоми санҷиши аввал натиҷаҳо дар ин ҷо нигоҳ дошта мешаванд.',
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          final speeds = results.map((item) => item.wordsPerMinute).toList();
+          final best = speeds.reduce((a, b) => a > b ? a : b);
+          final average = (speeds.reduce((a, b) => a + b) / speeds.length).round();
+          final totalWords = results.fold<int>(0, (sum, item) => sum + item.wordsRead);
+          final recent = results.take(7).toList();
+          final chartMax = recent
+              .map((item) => item.wordsPerMinute)
+              .fold<int>(1, (a, b) => a > b ? a : b);
+
+          return ListView(
+            padding: const EdgeInsets.all(20),
+            children: [
+              GridView.count(
+                crossAxisCount: 2,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                childAspectRatio: 1.45,
+                children: [
+                  _StatCard(title: 'Беҳтарин суръат', value: '$best', suffix: 'калима/дақ'),
+                  _StatCard(title: 'Суръати миёна', value: '$average', suffix: 'калима/дақ'),
+                  _StatCard(title: 'Санҷишҳо', value: '${results.length}', suffix: 'бор'),
+                  _StatCard(title: 'Ҳамаи калимаҳо', value: '$totalWords', suffix: 'калима'),
+                ],
+              ),
+              const SizedBox(height: 24),
+              const Text(
+                'Пешрафти охирин',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 12),
+              ...recent.map((item) => Padding(
+                    padding: const EdgeInsets.only(bottom: 14),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(_dateLabel(item.date),
+                                style: const TextStyle(color: Colors.black54, fontSize: 12)),
+                            Text('${item.wordsPerMinute} калима/дақ',
+                                style: const TextStyle(fontWeight: FontWeight.w700)),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: LinearProgressIndicator(
+                            value: item.wordsPerMinute / chartMax,
+                            minHeight: 9,
+                            backgroundColor: const Color(0xFFE5EAE7),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )),
+              const SizedBox(height: 12),
+              const Text(
+                'Таърихи санҷишҳо',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 8),
+              ...results.map((item) => Card(
+                    child: ListTile(
+                      leading: const CircleAvatar(
+                        child: Icon(Icons.menu_book_outlined),
+                      ),
+                      title: Text('${item.wordsPerMinute} калима дар як дақиқа'),
+                      subtitle: Text(
+                        '${item.wordsRead} калима · ${item.durationSeconds} сония · ${_dateLabel(item.date)}',
+                      ),
+                    ),
+                  )),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _StatCard extends StatelessWidget {
+  const _StatCard({
+    required this.title,
+    required this.value,
+    required this.suffix,
+  });
+
+  final String title;
+  final String value;
+  final String suffix;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE7F4ED),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(title, style: const TextStyle(color: Colors.black54, fontSize: 12)),
+          const SizedBox(height: 5),
+          Text(value,
+              style: const TextStyle(fontSize: 27, fontWeight: FontWeight.w900)),
+          Text(suffix, style: const TextStyle(fontSize: 11, color: Colors.black54)),
+        ],
+      ),
+    );
+  }
+}
+
 class ReadingScreen extends StatefulWidget {
   const ReadingScreen({super.key, required this.words});
   final List<String> words;
@@ -273,6 +463,8 @@ class ReadingScreen extends StatefulWidget {
 
 class _ReadingScreenState extends State<ReadingScreen> {
   Timer? _timer;
+  late final DateTime _startedAt;
+  bool _resultSaved = false;
   int _secondsLeft = 60;
   int _index = 0;
   int _readCount = 0;
@@ -280,15 +472,14 @@ class _ReadingScreenState extends State<ReadingScreen> {
   @override
   void initState() {
     super.initState();
+    _startedAt = DateTime.now();
     // The full minute starts as soon as the reading screen opens.
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_secondsLeft <= 1) {
         timer.cancel();
         if (mounted) {
-          setState(() {
-            _secondsLeft = 0;
-            _finished = true;
-          });
+          setState(() => _secondsLeft = 0);
+          _finishReading();
         }
       } else if (mounted) {
         setState(() => _secondsLeft--);
@@ -298,15 +489,35 @@ class _ReadingScreenState extends State<ReadingScreen> {
 
   void _markRead() {
     if (_finished) return;
+    if (_index >= widget.words.length - 1) {
+      setState(() => _readCount++);
+      _finishReading();
+      return;
+    }
     setState(() {
       _readCount++;
-      if (_index < widget.words.length - 1) {
-        _index++;
-      } else {
-        _finished = true;
-        _timer?.cancel();
-      }
+      _index++;
     });
+  }
+
+  Future<void> _finishReading() async {
+    if (_resultSaved || _finished) return;
+    _timer?.cancel();
+    final elapsed = DateTime.now().difference(_startedAt).inSeconds;
+    final duration = elapsed.clamp(1, 60).toInt();
+
+    setState(() => _finished = true);
+    _resultSaved = true;
+
+    try {
+      await StatisticsStore.add(ReadingResult(
+        date: DateTime.now(),
+        wordsRead: _readCount,
+        durationSeconds: duration,
+      ));
+    } catch (error) {
+      debugPrint('Could not save reading result: $error');
+    }
   }
 
   @override
@@ -337,12 +548,25 @@ class _ReadingScreenState extends State<ReadingScreen> {
                 const Text('Шумо хондед', style: TextStyle(fontSize: 20)),
                 Text('$_readCount',
                     style: const TextStyle(fontSize: 64, fontWeight: FontWeight.w900)),
-                const Text('калима дар як дақиқа',
+                const Text('калима хонда шуд',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 8),
+                Text(
+                  'Суръат: ${( _readCount * 60 / DateTime.now().difference(_startedAt).inSeconds.clamp(1, 60)).round()} калима/дақиқа',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                ),
                 const SizedBox(height: 24),
                 FilledButton(
                   onPressed: () => Navigator.pop(context),
                   child: const Text('Ба матн баргаштан'),
+                ),
+                const SizedBox(height: 10),
+                OutlinedButton.icon(
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const StatisticsScreen()),
+                  ),
+                  icon: const Icon(Icons.insights_outlined),
+                  label: const Text('Омори натиҷаҳо'),
                 ),
               ],
             ),
@@ -392,10 +616,7 @@ class _ReadingScreenState extends State<ReadingScreen> {
               ),
               const SizedBox(height: 10),
               TextButton(
-                onPressed: () {
-                  _timer?.cancel();
-                  setState(() => _finished = true);
-                },
+                onPressed: _finishReading,
                 child: const Text('Анҷом додан'),
               ),
             ],
