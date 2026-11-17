@@ -7,6 +7,7 @@ import 'package:image/image.dart' as img;
 import 'package:path_provider/path_provider.dart';
 import 'package:tesseract_ocr/ocr_engine_config.dart';
 import 'package:tesseract_ocr/tesseract_ocr.dart';
+import 'paragraph_detector.dart';
 
 void main() => runApp(const TajikReadApp());
 
@@ -55,19 +56,32 @@ class _HomeScreenState extends State<HomeScreen> {
       if (picked == null) return;
 
       final correctedPath = await _normalizeOrientation(picked.path);
-      final text = await TesseractOcr.extractText(
-        correctedPath,
-        config: OCRConfig(
-          language: 'tgk',
-          engine: OCREngine.tesseract,
-          options: const {
-            'preserve_interword_spaces': '1',
-            'tessedit_pageseg_mode': '3',
-          },
-        ),
+      const ocrConfig = OCRConfig(
+        language: 'tgk',
+        engine: OCREngine.tesseract,
+        options: {
+          'preserve_interword_spaces': '1',
+          'tessedit_pageseg_mode': '3',
+        },
       );
+
+      // hOCR preserves recognized line coordinates for paragraph detection.
+      final hocr = await TesseractOcr.extractHocr(
+        correctedPath,
+        config: ocrConfig,
+      );
+      final detected = HocrParagraphDetector.detectFromHocr(hocr);
+
+      // Plain-text fallback protects the existing flow if hOCR is empty.
+      final recognizedText = detected.lines.isNotEmpty
+          ? detected.text
+          : _tidyOcrText(await TesseractOcr.extractText(
+              correctedPath,
+              config: ocrConfig,
+            ));
+
       if (!mounted) return;
-      _textController.text = _tidyOcrText(text);
+      _textController.text = recognizedText;
       if (_textController.text.trim().isEmpty) {
         setState(() => _error = 'Матнро шинохтан муяссар нашуд. Сурати дигар гиред.');
       }
