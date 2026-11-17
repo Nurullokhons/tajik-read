@@ -25,13 +25,167 @@ class TajikReadApp extends StatelessWidget {
         useMaterial3: true,
         scaffoldBackgroundColor: const Color(0xFFF7F8F7),
       ),
-      home: const HomeScreen(),
+      home: const ProfileSelectionScreen(),
+    );
+  }
+}
+
+
+class ProfileSelectionScreen extends StatefulWidget {
+  const ProfileSelectionScreen({super.key});
+
+  @override
+  State<ProfileSelectionScreen> createState() => _ProfileSelectionScreenState();
+}
+
+class _ProfileSelectionScreenState extends State<ProfileSelectionScreen> {
+  List<ReaderProfile> _profiles = [];
+  bool _loading = true;
+  bool _openingSavedProfile = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfiles();
+  }
+
+  Future<void> _loadProfiles() async {
+    final profiles = await ProfileStore.load();
+    if (!mounted) return;
+    setState(() {
+      _profiles = profiles;
+      _loading = false;
+    });
+
+    final activeId = await ProfileStore.loadActiveId();
+    final active = profiles.where((profile) => profile.id == activeId);
+    if (active.isNotEmpty && mounted) {
+      _openProfile(active.first, replace: true);
+    }
+  }
+
+  Future<void> _openProfile(ReaderProfile profile, {bool replace = false}) async {
+    await ProfileStore.setActiveId(profile.id);
+    if (!mounted) return;
+    final page = MaterialPageRoute(
+      builder: (_) => HomeScreen(profile: profile),
+    );
+    if (replace) {
+      Navigator.of(context).pushReplacement(page);
+    } else {
+      Navigator.of(context).pushReplacement(page);
+    }
+  }
+
+  Future<void> _addProfile() async {
+    final controller = TextEditingController();
+    final name = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Новый профиль'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          maxLength: 30,
+          textCapitalization: TextCapitalization.words,
+          decoration: const InputDecoration(
+            labelText: 'Имя',
+            hintText: 'Введите имя ребёнка',
+          ),
+          onSubmitted: (value) => Navigator.pop(dialogContext, value.trim()),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Отмена'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, controller.text.trim()),
+            child: const Text('Создать'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+
+    final cleanName = name?.trim() ?? '';
+    if (cleanName.isEmpty) return;
+
+    final id = _profiles.isEmpty ? 'default' : DateTime.now().microsecondsSinceEpoch.toString();
+    final profile = ReaderProfile(id: id, name: cleanName);
+    await ProfileStore.add(profile);
+    if (!mounted) return;
+    await _openProfile(profile);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Tajik Read'),
+        centerTitle: true,
+      ),
+      body: SafeArea(
+        child: _loading
+            ? const Center(child: CircularProgressIndicator())
+            : ListView(
+                padding: const EdgeInsets.all(22),
+                children: [
+                  const SizedBox(height: 18),
+                  const Icon(Icons.menu_book_rounded,
+                      size: 54, color: Color(0xFF16845B)),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Кӣ имрӯз мехонад?',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Профилро интихоб кунед ё профили нав созед.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.black54),
+                  ),
+                  const SizedBox(height: 24),
+                  ..._profiles.map((profile) => Card(
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 18, vertical: 8),
+                          leading: CircleAvatar(
+                            backgroundColor: const Color(0xFFE7F4ED),
+                            child: Text(
+                              profile.name.isEmpty
+                                  ? '?'
+                                  : profile.name.characters.first.toUpperCase(),
+                              style: const TextStyle(
+                                  color: Color(0xFF16845B),
+                                  fontWeight: FontWeight.w800),
+                            ),
+                          ),
+                          title: Text(profile.name,
+                              style: const TextStyle(fontWeight: FontWeight.w700)),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () => _openProfile(profile),
+                        ),
+                      )),
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    onPressed: _addProfile,
+                    icon: const Icon(Icons.add),
+                    label: const Text('Илова кардани профил'),
+                    style: OutlinedButton.styleFrom(
+                        minimumSize: const Size.fromHeight(52)),
+                  ),
+                ],
+              ),
+      ),
     );
   }
 }
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({super.key, required this.profile});
+  final ReaderProfile profile;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -120,7 +274,7 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
     Navigator.of(context).push(MaterialPageRoute(
-      builder: (_) => ReadingScreen(words: words),
+      builder: (_) => ReadingScreen(words: words, profileId: widget.profile.id),
     ));
   }
 
@@ -138,10 +292,18 @@ class _HomeScreenState extends State<HomeScreen> {
         centerTitle: true,
         actions: [
           IconButton(
+            tooltip: 'Иваз кардани профил',
+            icon: const Icon(Icons.switch_account_outlined),
+            onPressed: () => Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (_) => const ProfileSelectionScreen()),
+              (route) => false,
+            ),
+          ),
+          IconButton(
             tooltip: 'Омори натиҷаҳо',
             icon: const Icon(Icons.insights_outlined),
             onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const StatisticsScreen()),
+              MaterialPageRoute(builder: (_) => StatisticsScreen(profileId: widget.profile.id)),
             ),
           ),
         ],
@@ -274,7 +436,8 @@ List<String> splitWords(String text) => text
     .toList();
 
 class StatisticsScreen extends StatefulWidget {
-  const StatisticsScreen({super.key});
+  const StatisticsScreen({super.key, required this.profileId});
+  final String profileId;
 
   @override
   State<StatisticsScreen> createState() => _StatisticsScreenState();
@@ -286,7 +449,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   @override
   void initState() {
     super.initState();
-    _resultsFuture = StatisticsStore.load();
+    _resultsFuture = StatisticsStore.load(profileId: widget.profileId);
   }
 
   String _dateLabel(DateTime date) {
@@ -454,8 +617,9 @@ class _StatCard extends StatelessWidget {
 }
 
 class ReadingScreen extends StatefulWidget {
-  const ReadingScreen({super.key, required this.words});
+  const ReadingScreen({super.key, required this.words, required this.profileId});
   final List<String> words;
+  final String profileId;
 
   @override
   State<ReadingScreen> createState() => _ReadingScreenState();
@@ -514,6 +678,7 @@ class _ReadingScreenState extends State<ReadingScreen> {
         date: DateTime.now(),
         wordsRead: _readCount,
         durationSeconds: duration,
+        profileId: widget.profileId,
       ));
     } catch (error) {
       debugPrint('Could not save reading result: $error');
@@ -563,7 +728,7 @@ class _ReadingScreenState extends State<ReadingScreen> {
                 const SizedBox(height: 10),
                 OutlinedButton.icon(
                   onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const StatisticsScreen()),
+                    MaterialPageRoute(builder: (_) => StatisticsScreen(profileId: widget.profileId)),
                   ),
                   icon: const Icon(Icons.insights_outlined),
                   label: const Text('Омори натиҷаҳо'),
