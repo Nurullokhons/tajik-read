@@ -387,7 +387,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 const Text('Матни шинохташуда',
                     style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
                 Text(
-                  'Абзацҳо: ${parseParagraphs(_textController.text).length}',
+                  'Калимаҳо: ${splitWords(_textController.text).length}',
                   style: const TextStyle(color: Colors.black54, fontSize: 12),
                 ),
               ],
