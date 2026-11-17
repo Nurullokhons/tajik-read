@@ -32,6 +32,19 @@ jobs:
       - name: Generate Android project
         run: flutter create --platforms=android,ios .
 
+      - name: Set Android app display name
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          manifest = Path('android/app/src/main/AndroidManifest.xml')
+          content = manifest.read_text()
+          content, count = re.subn(r'android:label="[^"]+"', 'android:label="Тезхон"', content, count=1)
+          if count != 1:
+              raise SystemExit('Could not find Android app label in manifest')
+          manifest.write_text(content)
+          PY
+
       - name: Generate Tezhon Android launcher icons
         run: |
           python -m pip install --quiet cairosvg
