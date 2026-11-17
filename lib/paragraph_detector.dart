@@ -104,6 +104,8 @@ class HocrParagraphDetector {
       if (endsSentence && isIndented && startsUppercase) {
         paragraphs.add(current.trim());
         current = next.text;
+      } else if (previous.endsWith('-')) {
+        current = '${current.substring(0, current.length - 1)}${next.text}';
       } else {
         current = '$current ${next.text}';
       }
