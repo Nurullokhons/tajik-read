@@ -11,6 +11,7 @@ dependencies:
     sdk: flutter
   image_picker: ^1.1.2
   image: ^4.2.0
+  flutter_svg: ^2.0.10+1
   path_provider: ^2.1.4
   tesseract_ocr:
     git:
@@ -25,5 +26,6 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
+    - assets/branding/tezhon_symbol.svg
     - assets/tessdata_config.json
     - assets/tessdata/
