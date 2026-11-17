@@ -41,7 +41,6 @@ class ProfileSelectionScreen extends StatefulWidget {
 class _ProfileSelectionScreenState extends State<ProfileSelectionScreen> {
   List<ReaderProfile> _profiles = [];
   bool _loading = true;
-  bool _openingSavedProfile = false;
 
   @override
   void initState() {
@@ -312,6 +311,34 @@ class _HomeScreenState extends State<HomeScreen> {
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: CircleAvatar(
+                backgroundColor: const Color(0xFFE7F4ED),
+                child: Text(
+                  widget.profile.name.isEmpty
+                      ? '?'
+                      : widget.profile.name.characters.first.toUpperCase(),
+                  style: const TextStyle(
+                    color: Color(0xFF16845B),
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              title: Text(
+                widget.profile.name,
+                style: const TextStyle(fontWeight: FontWeight.w800),
+              ),
+              subtitle: const Text('Профили фаъол'),
+              trailing: TextButton.icon(
+                onPressed: () => Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => const ProfileSelectionScreen()),
+                  (route) => false,
+                ),
+                icon: const Icon(Icons.swap_horiz),
+                label: const Text('Иваз'),
+              ),
+            ),
             Container(
               padding: const EdgeInsets.all(22),
               decoration: BoxDecoration(
