@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image/image.dart' as img;
 import 'package:path_provider/path_provider.dart';
@@ -126,8 +127,7 @@ class _ProfileSelectionScreenState extends State<ProfileSelectionScreen> {
                 padding: const EdgeInsets.all(22),
                 children: [
                   const SizedBox(height: 18),
-                  const Icon(Icons.menu_book_rounded,
-                      size: 54, color: Color(0xFF176B4B)),
+                  SvgPicture.asset('assets/branding/tezhon_symbol.svg', width: 112, height: 112),
                   const SizedBox(height: 12),
                   const Text(
                     'Кӣ имрӯз мехонад?',
@@ -340,13 +340,20 @@ class _HomeScreenState extends State<HomeScreen> {
                 color: const Color(0xFFE5F3EA),
                 borderRadius: BorderRadius.circular(24),
               ),
-              child: const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Row(
                 children: [
-                  Text('Суръати хониши худро санҷед',
-                      style: TextStyle(fontSize: 23, fontWeight: FontWeight.w800)),
-                  SizedBox(height: 8),
-                  Text('Китобро кушо, тезтар бихон ва суръати хониши худро дар 60 сония бисанҷ!'),
+                  SvgPicture.asset('assets/branding/tezhon_symbol.svg', width: 76, height: 76),
+                  const SizedBox(width: 16),
+                  const Expanded(child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Тезхон', style: TextStyle(fontSize: 25, fontWeight: FontWeight.w900, color: Color(0xFF176B4B))),
+                      SizedBox(height: 4),
+                      Text('Тезтар бихон!', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF26352E))),
+                      SizedBox(height: 8),
+                      Text('Суръати хониши худро дар 60 сония бисанҷ!'),
+                    ],
+                  )),
                 ],
               ),
             ),
