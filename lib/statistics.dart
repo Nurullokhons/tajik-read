@@ -1,3 +1,8 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:path_provider/path_provider.dart';
+
 
 class ReaderProfile {
   const ReaderProfile({required this.id, required this.name});
@@ -57,11 +62,6 @@ class ProfileStore {
     await file.writeAsString(id, flush: true);
   }
 }
-
-import 'dart:convert';
-import 'dart:io';
-
-import 'package:path_provider/path_provider.dart';
 
 class ReadingResult {
   const ReadingResult({
@@ -129,3 +129,4 @@ class StatisticsStore {
     );
   }
 }
+
