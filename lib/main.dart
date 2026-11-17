@@ -395,6 +395,7 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 8),
             TextField(
               controller: _textController,
+              onChanged: (_) => setState(() {}),
               minLines: 9,
               maxLines: 16,
               textAlign: TextAlign.justify,
