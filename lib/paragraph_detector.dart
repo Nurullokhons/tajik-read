@@ -24,9 +24,9 @@ class HocrParagraphDetector {
     // Find line opening tags first. hOCR nests word spans inside line spans,
     // so matching from one <span> to the first </span> would truncate words.
     final lineOpen = RegExp(
-      r'<span\b(?=[^>]*class=["\'][^"\']*\bocrx?_line\b)[^>]*>',
-      caseSensitive: false,
-    );
+  r"""<span\b(?=[^>]*class=["'][^"']*\bocrx?_line\b[^"']*["'])[^>]*>""",
+  caseSensitive: false,
+);
     final bbox = RegExp(r'\bbbox\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)');
     final tags = RegExp(r'<[^>]+>');
     final matches = lineOpen.allMatches(hocr).toList();
