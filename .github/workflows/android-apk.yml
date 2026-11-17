@@ -32,6 +32,19 @@ jobs:
       - name: Generate Android project
         run: flutter create --platforms=android,ios .
 
+      - name: Generate Tezhon Android launcher icons
+        run: |
+          python -m pip install --quiet cairosvg
+          python - <<'PY'
+          import cairosvg
+          from pathlib import Path
+          sizes = {'mipmap-mdpi': 48, 'mipmap-hdpi': 72, 'mipmap-xhdpi': 96, 'mipmap-xxhdpi': 144, 'mipmap-xxxhdpi': 192}
+          for folder, size in sizes.items():
+              target = Path('android/app/src/main/res') / folder / 'ic_launcher.png'
+              target.parent.mkdir(parents=True, exist_ok=True)
+              cairosvg.svg2png(url='assets/branding/tezhon_icon.svg', write_to=str(target), output_width=size, output_height=size)
+          PY
+
       - name: Download Tajik OCR model
         run: |
           mkdir -p assets/tessdata
